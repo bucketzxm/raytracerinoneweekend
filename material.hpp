@@ -1,5 +1,8 @@
 #ifndef MATERIALH
 #define MATERIALH
+#include "vec3.h"
+#include "hitable.h"
+#include "hitablelist.h"
 
 vec3 random_in_unit_sphere(){
   vec3 p;
@@ -13,9 +16,22 @@ vec3 reflect(const vec3& v, const vec3& n){
   return v - 2*dot(v, n)*n;
 }
 
+bool refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& refracted){
+  // (of water, glass, or air) make (a light ray) change direction when it enters at an angle.
+  vec3 uv = unit_vector(v);
+  float dt = dot(uv, n);
+  float discriminant = 1.0 - ni_over_nt*ni_over_nt*(1-dt*dt);
+  if(discriminant > 0){
+    refracted = ni_over_nt*(uv - n*dt) - n*sqrt(discriminant);
+    return true;
+  }
+  return false;
+}
+
 class material{
 public:
   virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const = 0;
+
 };
 
 class lambertian: public material {
@@ -23,31 +39,48 @@ public:
   lambertian(const vec3& a): albedo(a) {}
 
   // throw light in various random directions.
-  virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
-    vec3 target = rec.p + rec.normal + random_in_unit_sphere();
-    scattered = ray(rec.p, target-rec.p);
-    // attenuation: weakening, reduction, decrease;
-    // the reduction of the ligth energy;
-    attenuation = albedo;
-    return true;
-  }
+  virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const;
+
   // definition: albedo is the fraction of solar energy(shortwave radiation) reflected from the Earth back into space .
   // it is a measure of the reflectivity of the earth's surface. Ice, especially with snow on top of it, has a high
   // albedo: most sunlight hitting the surface bounces back towards space.
   vec3 albedo;
+  
 };
 
 class metal: public material {
 public:
-  metal(const vec3& a): albedo(a) {}
-
-  virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
-    vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-    scattered = ray(rec.p, reflected);
-    attenuation = albedo;
-    return (dot(scattered.direction(), rec.normal) > 0);
+  metal(const vec3& a, float f): albedo(a) {
+    if(f<1){
+      fuzz = f;
+    }else{
+      fuzz = 1;
+    }
   }
+  virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const;
   vec3 albedo;
+  float fuzz;
 };
+
+class dielectric: public material{
+
+};
+
+
+// class method declaration
+bool lambertian::scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
+  vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+  scattered = ray(rec.p, target-rec.p);
+  // attenuation: weakening, reduction, decrease;
+  // the reduction of the ligth energy;
+  attenuation = albedo;
+  return true;
+}
+bool metal::scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
+  vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
+  scattered = ray(rec.p, reflected + fuzz*random_in_unit_sphere());
+  attenuation = albedo;
+  return (dot(scattered.direction(), rec.normal) > 0);
+}
 
 #endif

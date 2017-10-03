@@ -13,7 +13,7 @@ public:
     origin = vec3(0.0, 0.0, 0.0);
 
   }
-  ray get_ray(float u, float v) {return ray(origin, lower_left_corner+u*horizontal + lower_left_corner + v*vertical - origin);}
+  ray get_ray(float u, float v) {return ray(origin, lower_left_corner + u*horizontal + v*vertical - origin);}
 
   vec3 origin;
   vec3 lower_left_corner;
