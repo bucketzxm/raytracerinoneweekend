@@ -6,8 +6,43 @@
 #include "camera.hpp"
 #include "material.hpp"
 
-int inBall = 0;
-int outBall = 0;
+
+hitable_list *random_scene(){
+
+  int n = 500;
+  hitable **list = new hitable*[n+1];
+  list[0] = new sphere(vec3(0, -100, 0), 1000, std::make_shared<lambertian>(lambertian(vec3(0.5, 0.5, 0.5))));
+
+  int i = 1;
+  for(int a = -11; a < 11; a++){
+    for(int b = -11; b < 11; b++){
+      float choose_mat = drand48();
+
+      vec3 center( a+0.9*drand48(), 0.2, b + 0.9*drand48());
+      if((center-vec3(4.0, 2, 0)).length() > 0.9) {
+        if (choose_mat < 0.8){ //diffuse
+          list[i++] = new sphere(center, 0.2, std::make_shared<lambertian>(lambertian(vec3(drand48()*drand48(),
+                                                                                               drand48()*drand48(),
+                                                                                               drand48()*drand48()))));
+        }
+        else if(choose_mat < 0.95) { //metal
+          list[i++] = new sphere(center, 0.2,std::make_shared<metal>(metal(vec3(0.5*(1+drand48()),
+                                                                                    0.5*(1+drand48()),
+                                                                                    0.5*(1+drand48())), 0.5*drand48())));
+
+        }
+        else { //glass
+          list[i++] = new sphere(center, 0.2, std::make_shared<dielectric>(dielectric(1.5)));
+        }
+      }
+    }
+  }
+  list[i++] = new sphere(vec3(0, 1, 0), 1.0, std::make_shared<dielectric>(dielectric(1.5)));
+  list[i++] = new sphere(vec3(-4, 1, 0), 1.0, std::make_shared<lambertian>(lambertian(vec3(0.4, 0.2, 0.1))));
+  list[i++] = new sphere(vec3(4, 1, 0), 1.0, std::make_shared<metal>(metal(vec3(0.7, 0.6, 0.5), 0.0)));
+  return new hitable_list(list,i);
+}
+
 float hit_sphere(const vec3& center, float radius, const ray& r){
   vec3 oc = r.origin() - center;
   float a = dot(r.direction(), r.direction());
@@ -25,12 +60,12 @@ float hit_sphere(const vec3& center, float radius, const ray& r){
 vec3 color(const ray& r){
   float t = hit_sphere(vec3(0, 0, -1), 0.5, r);
   if (t > 0.0){
-    inBall += 1;
+
     vec3 N = unit_vector(r.point_at_parameter(t) - vec3(0, 0, -1)); // normal vector at hit point
     return 0.5 * vec3(N.x() + 1, N.y() +1, N.z() + 1);
   }
   else{
-    outBall +=1;
+
     vec3 unit_direction = unit_vector(r.direction());
     t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
@@ -84,22 +119,28 @@ int main(int argc, char* argv[]){
   vec3 vertical(0.0, 2.0, 0.0);
   vec3 origin(0.0, 0.0, 0.0);
 
-  hitable *list[5];
-  list[0] = new sphere(vec3(0, 0, -1), 0.5, std::make_shared<lambertian>(lambertian(vec3(0.8, 0.3, 0.3))));
-  list[1] = new sphere(vec3(0, -100.5, -1), 100, std::make_shared<lambertian>(lambertian(vec3(0.8, 0.8, 0.0))));
-  list[2] = new sphere(vec3(1, 0, -1), 0.5, std::make_shared<metal>(metal(vec3(0.8, 0.6, 0.2), 0.3)));
-  list[3] = new sphere(vec3(-1, 0, -1), 0.5, std::make_shared<dielectric>(dielectric(1.5)));
-  list[4] = new sphere(vec3(-1, 0, -1), -0.45, std::make_shared<dielectric>(dielectric(1.5)));
+  // hitable *list[5];
+  // list[0] = new sphere(vec3(0, 0, -1), 0.5, std::make_shared<lambertian>(lambertian(vec3(0.8, 0.3, 0.3))));
+  // list[1] = new sphere(vec3(0, -100.5, -1), 100, std::make_shared<lambertian>(lambertian(vec3(0.8, 0.8, 0.0))));
+  // list[2] = new sphere(vec3(1, 0, -1), 0.5, std::make_shared<metal>(metal(vec3(0.8, 0.6, 0.2), 0.3)));
+  // list[3] = new sphere(vec3(-1, 0, -1), 0.5, std::make_shared<dielectric>(dielectric(1.5)));
+  // list[4] = new sphere(vec3(-1, 0, -1), -0.45, std::make_shared<dielectric>(dielectric(1.5)));
 
   // hitable *list[2];
   // float R = cos(M_PI/4);
   // list[0] = new sphere(vec3(-R, 0, -1), R, std::make_shared<lambertian>(lambertian(vec3(0, 0, 1))));
   // list[1] = new sphere(vec3(R,0, -1), R, std::make_shared<lambertian>(lambertian(vec3(1, 0, 0))));
 
-  hitable *world = new hitable_list(list, 5);
-
+  // hitable *world = new hitable_list(list, 5);
+  hitable* world = random_scene();
   // camera cam(90, float(nx)/ float(ny));
-  camera cam(vec3(-2, 2, 1), vec3(0, 0, -1), vec3(0, 1, 0), 90, float(nx)/float(ny));
+
+  vec3 lookfrom(3, 3, 2);
+  vec3 lookat(0, 0, -1);
+  float dist_to_focus = (lookfrom - lookat).length();
+  float aperture = 2.0;
+  // camera cam(vec3(-2, 2, 1), vec3(0, 0, -1), vec3(0, 1, 0), 90, float(nx)/float(ny));
+  camera cam(lookfrom, lookat, vec3(0, 1, 0), 90, float(nx)/float(ny), aperture, dist_to_focus);
   for(int j=ny-1; j>=0; j--){
     for(int i=0 ; i<nx; i++){
       vec3 col(0, 0, 0);

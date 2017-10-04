@@ -57,7 +57,7 @@ public:
   // it is a measure of the reflectivity of the earth's surface. Ice, especially with snow on top of it, has a high
   // albedo: most sunlight hitting the surface bounces back towards space.
   vec3 albedo;
-  
+
 };
 
 class metal: public material {
