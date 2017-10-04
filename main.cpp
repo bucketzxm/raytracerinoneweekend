@@ -84,13 +84,14 @@ int main(int argc, char* argv[]){
   vec3 vertical(0.0, 2.0, 0.0);
   vec3 origin(0.0, 0.0, 0.0);
 
-  hitable *list[4];
+  hitable *list[5];
   list[0] = new sphere(vec3(0, 0, -1), 0.5, std::make_shared<lambertian>(lambertian(vec3(0.8, 0.3, 0.3))));
   list[1] = new sphere(vec3(0, -100.5, -1), 100, std::make_shared<lambertian>(lambertian(vec3(0.8, 0.8, 0.0))));
   list[2] = new sphere(vec3(1, 0, -1), 0.5, std::make_shared<metal>(metal(vec3(0.8, 0.6, 0.2), 0.3)));
-  list[3] = new sphere(vec3(-1, 0, -1), 0.5, std::make_shared<metal>(metal(vec3(0.8, 0.8, 0.8), 0.1)));
+  list[3] = new sphere(vec3(-1, 0, -1), 0.5, std::make_shared<dielectric>(dielectric(1.5)));
+  list[4] = new sphere(vec3(-1, 0, -1), -0.45, std::make_shared<dielectric>(dielectric(1.5)));
 
-  hitable *world = new hitable_list(list, 4);
+  hitable *world = new hitable_list(list, 5);
 
   camera cam;
   for(int j=ny-1; j>=0; j--){
