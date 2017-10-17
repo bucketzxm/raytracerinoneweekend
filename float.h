@@ -2,6 +2,6 @@
 #define FLOATH
 
 #include <cfloat>
-float MAXFLOAT = FLT_MAX;
+float MAX_FLOAT = FLT_MAX;
 
 #endif

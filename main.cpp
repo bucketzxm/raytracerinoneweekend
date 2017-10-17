@@ -75,7 +75,7 @@ vec3 color(const ray& r){
 
 vec3 color(const ray& r, hitable* world){
   hit_record rec;
-  if(world->hit(r, 0.001, MAXFLOAT, rec)){
+  if(world->hit(r, 0.001, MAX_FLOAT, rec)){
     vec3 target = rec.p + rec.normal + random_in_unit_sphere();
     return 0.5*color( ray(rec.p, target - rec.p), world);
     // return 0.5*vec3(rec.normal.x()+1, rec.normal.y() + 1, rec.normal.z()+1);
@@ -91,7 +91,7 @@ vec3 color(const ray& r, hitable* world, int depth){
   hit_record rec;
   // if(world->hit(r, 0.0, MAXFLOAT, rec)){
   // use 0.001 instead of 0.0 get rid of the shadow acne problem
-  if(world->hit(r, 0.001, MAXFLOAT, rec)){
+  if(world->hit(r, 0.001, MAX_FLOAT, rec)){
     ray scattered;
     vec3 attenuation;
     if(depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)){
